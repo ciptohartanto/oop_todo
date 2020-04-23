@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
+
+*,
+*:before,
+*:after{
+  box-sizing: border-box;
+}
+
+input{
+  appearance: none;
+  border: none;
+}
+input:focus{
+  outline: none;
+}
+
+body{
+  font-family: 'Caveat', cursive;
+}
+
+.todo{
+  width: 20%;
+  min-width: 300px;
+  display: flex;
+  height: 100vh;
+  padding-top: 100px;
+  justify-content: flex-start;
+  flex-direction: column;
+  margin-left: auto;
+  margin-right: auto;
+}
+.todo-title{
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.todo-subtitle1,
+.todo-subtitle2{
+  font-size: 22px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+.todo-item{
+  list-style-type: none;
+}
+.todo-newInput,
+.todo-itemInput{
+  border-bottom: 1px solid blueviolet;
+  padding: 10px 8px;
+  font-size: 16px;
+}
+.todo-item{
+  position: relative;
+}
+.todo-itemInput{
+  border: none;
+  width: 100%;
+  padding: 10px 20px 10px 8px;
+  cursor: grab;
+}
+.todo-itemInput:focus{
+  border-bottom: 1px solid blueviolet;
+}
+.todo-itemInput:hover + .todo-x{
+  opacity: 1;
+  transform: .3s all ease-in-out;
+}
+.todo-itemInput{
+  font-size: 14px;
+  color: grey
+}
+.todo-x{
+  color: red;
+  opacity: 0;
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.todo-x:hover{
+  opacity: 1;
+}

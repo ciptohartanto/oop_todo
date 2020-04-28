@@ -1,19 +1,17 @@
 // import Model from './model/model.js'
 
+// TODO:
+// show 'no todos' when todos.length === 0
+// make it possible to delete single item
+// set placeholder correctly 
+
 class Model{
   constructor() {
-    this.todos = [
-      { id: 1, text: 'Marathon', complete: false },
-      { id: 2, text: 'Gardening', complete: false }
-    ]
+    this.todos = JSON.parse(localStorage.getItem('todos')) || []
   }
-  
-  // bindTodosData(callback){
-  //   this.updateTodo = callback
-  // }
   addTodo(todoText, isComplete=false) {
     const genID = () => {
-      if(this.todos.length > 0 ) {
+      if(this.todos.length >= 0 ) {
         return this.todos.length + 1
       }
     }
@@ -23,9 +21,11 @@ class Model{
       complete: isComplete
     }
     this.todos.push(newTodo)
+    this._commit(this.todos)
   }
   deleteTodo(id) {
     this.todos = this.todos.filter(todo => todo.id !== id)
+    this._commit(this.todos)
   }
   
   editTodo(id, todoText) {
@@ -34,6 +34,8 @@ class Model{
       text: todoText,
       complete: todo.complete
     } : todo)
+    this._commit(this.todos)
+    console.log('editted to: ' + todoText)
   }
   toggleTodo(id) {
     this.todos = this.todos.map(todo => todo.id === id ? {
@@ -41,6 +43,17 @@ class Model{
       text: todo.text,
       complete: !todo.complete
     } : todo)
+  }
+  bindTodosOnChange(callback) {
+    /* dont' confuse:
+    1. this.updateTodo is a prop of model
+    2. the value is set to the callback === controller.updateTodo
+    */
+    this.updateTodo = callback
+  }
+  _commit(todos){
+    this.updateTodo(todos) // now we can pass todo as an argument to this.updateTodo
+    localStorage.setItem('todos', JSON.stringify(todos))
   }
 }
 
@@ -58,17 +71,9 @@ class View{
     this.subtitle2 = this.createElement('h2', 'todo-subtitle2');
     this.subtitle2.innerHTML = 'Daftar Karadjo';
     this.todoList = this.createElement('ul', 'todo-list');
-    this.todoItem = this.createElement('li', 'todo-item');
-    this.todoItemInput = this.createElement('input', 'todo-itemInput');
-    this.todoItemInput.id = 0;
-    this.todoItemInput.type = 'text'
-
-    this.todoItemX = this.createElement('span', 'todo-x');
-    this.todo.append(this.title, this.subtitle1, this.newInput, this.subtitle2);
-    this.app.append(this.todo);
     
-    this.newTodo = ''
-    this._init_listenNewInput()
+    // this.editTodoText
+    this.newTodo = '';
   }
   createElement(tag,className) {
     const elem = document.createElement(tag)
@@ -85,32 +90,70 @@ class View{
   _resetInput() {
     this.newInput.value = ''
   }
-  _init_listenNewInput() {
+  _attachClick() {
+    this.itemInputs = document.querySelectorAll('.todo-itemInput')
+  }
+  createSkeleton(){
+    this.todo.append(this.title, this.subtitle1, this.newInput, this.subtitle2, this.todoList);
+    this.app.append(this.todo);
+  }
+  displayTodos(todos) {
+      const markup = new Array()
+      todos.forEach(todo => {
+        const listItem = `
+          <li class="todo-item">
+            <input class="todo-itemInput" type="text" id="${todo.id}" value="${todo.text}" />
+            <span class="todo-x">x</span>
+          </li>
+        `
+        markup.push(listItem)
+      });
+      this.todoList.innerHTML = markup.map(item => item).join('');
+      
+  }
+  newTodoText(handler, todos) {
     this.newInput.addEventListener('keyup', (e) => {
+      e.preventDefault()
       if(e.which === 13) {
-        this.newTodo = this._newInputValue
         if(this._newInputValue.trim().length === 0) {
-          this.newInput.placeholder = 'Ketik anu baleg, beul!'
-          this._resetInput()
+          this.newTodo = this._newInputValue
+          this.newInput.placeholder = 'Ketik anu baleg, beul ah!';
+          this._resetInput();
+        }
+        else{
+          this.newTodo = this._newInputValue
+          handler(this.newTodo); // this handler takes care of 
+          this.newInput.placeholder = 'Kntab!';
+          
+          this._resetInput(); // resets the this.newInput.value
+          console.log(this.newTodo)
         }
       }
     })
   }
-  displayTodos(todos) {
-    if(todos.length !== 0) {
-      const markup = new Array()
-      todos.forEach(todo => {
-        this.todoItemInput.value = todo.text;
-        this.todoItemInput.id = todo.id;
-        this.todoItem.append(this.todoItemInput, this.todoItemX);
-        markup.push(this.todoItem)
-        console.log(todo.id)
-      });
-      this.todoList.innerHTML = markup.map(item => item.outerHTML).join('');
-      this.todo.append(this.todoList);
-      console.log(markup)
-    }
-
+  editTodoText(handler) {
+    document.querySelectorAll('.todo-itemInput').forEach(item => {
+      item.addEventListener('keyup', (e) => {
+        e.preventDefault()
+        if(e.which === 13) {
+          if(item.value.trim().length === 0) {
+            item.placeholder = 'Ketik anu baleg, beul!';
+            item.value=''
+          } else {
+            handler(Number(item.id), item.value.toString());
+          }
+        }
+      })
+    })
+  }
+  deleteTodoText(handler) {
+    document.querySelectorAll('.todo-itemInput').forEach(item => {
+      item.parentElement.children[1].addEventListener('click', (e)=>{
+        e.preventDefault();
+        handler(item.id);
+        alert(item.id);
+      })
+    })
   }
 }
 
@@ -118,12 +161,25 @@ class Controller {
   constructor(){
     this.model = new Model();
     this.view = new View();
-    // this.model.bindTodosData(this.updateTodo)
-    this.updateTodo(this.model.todos) // inject the initial todos
-    this.x = this.model.todos
+    this.view.createSkeleton(); // create the basic markup for this project
+    this.updateTodo(this.model.todos); // inject the initial todos
+    this.model.bindTodosOnChange(this.updateTodo); // connecting view and model to update the model.todos
   }
   updateTodo = todos => {
-    this.view.displayTodos(todos)
+    this.view.displayTodos(todos);
+    this.view.newTodoText(this.handleNewTodo, this.model.todos);
+    this.view.editTodoText(this.handleEditingTodo, this.model.todos);
+    this.view.deleteTodoText(this.handleDeleteTodo);
+  }
+  handleNewTodo = todoText => {
+    this.model.addTodo(todoText);
+  }
+  handleEditingTodo = (id, todoText) => {
+    this.model.editTodo(id, todoText);
+    // console.log(this.model.todos[id-1].text) //debugging
+  }
+  handleDeleteTodo = (id) => {
+    this.model.deleteTodo(id);
   }
 }
 

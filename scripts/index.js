@@ -41,7 +41,7 @@ class Model{
     } : todo)
   }
   bindTodosOnChange(callback) {
-    /* dont' confuse:
+    /* don't get confused:
     1. this.updateTodo is a prop of model
     2. the value is set to the callback === controller.updateTodo
     */

@@ -6,13 +6,17 @@ class Model{
     this.todos = JSON.parse(localStorage.getItem('todos')) || []
   }
   addTodo(todoText, isComplete=false) {
-    const genID = () => {
-      if(this.todos.length >= 0 ) {
-        return this.todos.length + 1
-      }
-    }
+    // const genID = () => {
+    //   if(this.todos.length >= 0 ) {
+    //     return this.todos.length + 1
+    //   }
+    //   else if(this.todos.length > 0 ) {
+    //     const todosLen = this.todos.length
+    //     return this.todos.length[todosLen].id + 2
+    //   }
+    // }
     const newTodo = {
-      id: genID(),
+      id: this.todos.length > 0 ? this.todos[this.todos.length - 1].id + 1 : 1,
       text: todoText,
       complete: isComplete
     }
@@ -31,7 +35,7 @@ class Model{
       complete: todo.complete
     } : todo)
     this._commit(this.todos)
-    console.log('editted to: ' + todoText)
+
   }
   toggleTodo(id) {
     this.todos = this.todos.map(todo => todo.id === id ? {
@@ -39,6 +43,8 @@ class Model{
       text: todo.text,
       complete: !todo.complete
     } : todo)
+    this._commit(this.todos)
+
   }
   bindTodosOnChange(callback) {
     /* don't get confused:
@@ -67,8 +73,6 @@ class View{
     this.subtitle2 = this.createElement('h2', 'todo-subtitle2');
     this.subtitle2.innerHTML = 'Daftar Karadjo';
     this.todoList = this.createElement('ul', 'todo-list');
-
-
 
     // this.editTodoText
     this.newTodo = '';
@@ -107,6 +111,7 @@ class View{
         todos.forEach(todo => {
           const markup_todoList = `
             <li class="todo-item">
+              <input type="checkbox" class="todo-itemRadio">
               <input class="todo-itemInput" type="text" id="${todo.id}" value="${todo.text}" />
               <span class="todo-x">x</span>
             </li>
@@ -153,8 +158,17 @@ class View{
   }
   deleteTodoText(handler) {
     document.querySelectorAll('.todo-itemInput').forEach(item => {
-      item.parentElement.children[1].addEventListener('click', (e)=>{
+      item.parentElement.children[2].addEventListener('click', (e)=>{
         e.preventDefault();
+        handler(Number(item.id));
+      })
+    })
+  }
+  tickTodo(handler) {
+    document.querySelectorAll('.todo-itemInput').forEach(item => {
+      item.parentElement.children[0].addEventListener('click', (e)=>{
+        e.preventDefault();
+
         handler(Number(item.id));
       })
     })
@@ -174,16 +188,20 @@ class Controller {
     this.view.newTodoText(this.handleNewTodo, this.model.todos);
     this.view.editTodoText(this.handleEditingTodo, this.model.todos);
     this.view.deleteTodoText(this.handleDeleteTodo);
+    this.view.tickTodo(this.handleTickTodo);
   }
   handleNewTodo = todoText => {
     this.model.addTodo(todoText);
   }
   handleEditingTodo = (id, todoText) => {
     this.model.editTodo(id, todoText);
-    // console.log(this.model.todos[id-1].text) //debugging
   }
   handleDeleteTodo = (id) => {
     this.model.deleteTodo(id);
+  }
+  handleTickTodo = id => {
+    this.model.toggleTodo(id);
+    console.log(id)
   }
 }
 

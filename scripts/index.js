@@ -1,9 +1,5 @@
 // import Model from './model/model.js'
 
-// TODO:
-// show 'no todos' when todos.length === 0
-// make it possible to delete single item
-// set placeholder correctly 
 
 class Model{
   constructor() {
@@ -27,7 +23,7 @@ class Model{
     this.todos = this.todos.filter(todo => todo.id !== id)
     this._commit(this.todos)
   }
-  
+
   editTodo(id, todoText) {
     this.todos = this.todos.map(todo => todo.id === id ? {
       id: todo.id,
@@ -71,7 +67,9 @@ class View{
     this.subtitle2 = this.createElement('h2', 'todo-subtitle2');
     this.subtitle2.innerHTML = 'Daftar Karadjo';
     this.todoList = this.createElement('ul', 'todo-list');
-    
+
+
+
     // this.editTodoText
     this.newTodo = '';
   }
@@ -99,35 +97,42 @@ class View{
   }
   displayTodos(todos) {
       const markup = new Array()
-      todos.forEach(todo => {
-        const listItem = `
-          <li class="todo-item">
-            <input class="todo-itemInput" type="text" id="${todo.id}" value="${todo.text}" />
-            <span class="todo-x">x</span>
-          </li>
+
+      if (todos.length === 0) {
+        const markup_noTodos = `
+          <p>No Todos! :)</p>
         `
-        markup.push(listItem)
-      });
+        markup.push(markup_noTodos)
+      } else {
+        todos.forEach(todo => {
+          const markup_todoList = `
+            <li class="todo-item">
+              <input class="todo-itemInput" type="text" id="${todo.id}" value="${todo.text}" />
+              <span class="todo-x">x</span>
+            </li>
+          `
+          markup.push(markup_todoList)
+        });
+      }
       this.todoList.innerHTML = markup.map(item => item).join('');
-      
+
   }
   newTodoText(handler, todos) {
     this.newInput.addEventListener('keyup', (e) => {
       e.preventDefault()
-      if(e.which === 13) {
-        if(this._newInputValue.trim().length === 0) {
-          this.newTodo = this._newInputValue
-          this.newInput.placeholder = 'Ketik anu baleg, beul ah!';
-          this._resetInput();
-        }
-        else{
-          this.newTodo = this._newInputValue
-          handler(this.newTodo); // this handler takes care of 
-          this.newInput.placeholder = 'Kntab!';
-          
+      this.newTodo = this.newInput.value;
+
+      if( e.which === 13) {
+        if(this.newInput.value.trim().length !== 0) {
+          handler(this.newTodo); // this handler takes care of
+          this.newInput.placeholder = 'Tambah Karadjo';
           this._resetInput(); // resets the this.newInput.value
-          console.log(this.newTodo)
+        } else if (this.newInput.value.trim().length === 0 && this.newTodo !== '') {
+          this._resetInput(); // resets the this.newInput.value
+          this.newTodo = '';
+          this.newInput.placeholder = 'Ulangi lagi!';
         }
+
       }
     })
   }
@@ -150,8 +155,7 @@ class View{
     document.querySelectorAll('.todo-itemInput').forEach(item => {
       item.parentElement.children[1].addEventListener('click', (e)=>{
         e.preventDefault();
-        handler(item.id);
-        alert(item.id);
+        handler(Number(item.id));
       })
     })
   }
